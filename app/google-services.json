@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "17769676427",
+    "project_id": "fcmproject-d593f",
+    "storage_bucket": "fcmproject-d593f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:17769676427:android:122f393421fb7b44151e8e",
+        "android_client_info": {
+          "package_name": "com.dorasima.fcmproject"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "17769676427-4v2ass6mn8d8mmr9mpcmjeil5hob5qd3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQ5MMeNgeI4EtxVxmKhTPnMPhWCDwtW9I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "17769676427-4v2ass6mn8d8mmr9mpcmjeil5hob5qd3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
