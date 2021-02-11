@@ -1,0 +1,16 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<form action="send_topic_pro.jsp" method="post">
+		<!-- 그래고 매세지를 입력하는 칸을 만들고, 보내는 버튼을 만든다. -->
+		<input type="text" name="message"/><br/>
+		<button type="submit">전송</button>
+	</form>
+</body>
+</html>

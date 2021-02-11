@@ -1,0 +1,39 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ page import = "java.sql.*" %>
+<%
+request.setCharacterEncoding("utf-8");
+
+	//데이터 베이스에 접속한다.
+	Class.forName("oracle.jdbc.OracleDriver");
+	String url = "jdbc:oracle:thin:@localhost:1521:orcl";
+	String id = "sys as sysdba";
+	String pw = "1234";
+
+	Connection db = DriverManager.getConnection(url,id,pw);
+
+	String sql = "select fcm_token from fcm_table";
+	Statement stmt = db.createStatement();
+	ResultSet rs = stmt.executeQuery(sql);
+%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<form action="send_target_pro.jsp" method="post">
+	<!-- DB를 전부 돌면서 -->
+		<% while(rs.next()){%>
+		<!-- 토큰을 선택하는 라디오 버튼을 만든다. -->
+		<input type="radio" name="token" value ="<%= rs.getString("fcm_token") %>"/>
+		<%= rs.getString("fcm_token")%>
+		<% } %>
+		<hr/>
+		<!-- 그래고 매세지를 입력하는 칸을 만들고, 보내는 버튼을 만든다. -->
+		<input type="text" name="message"/><br/>
+		<button type="submit">전송</button>
+	</form>
+</body>
+</html>

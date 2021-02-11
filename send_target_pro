@@ -1,0 +1,77 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ page import="java.net.*" %>
+<%@ page import="java.io.*" %>
+<%@ page import="org.json.simple.*" %>
+<%
+	request.setCharacterEncoding("utf-8");
+	// token과 message 리퀘스트를 담아 놓는다.
+	String token = request.getParameter("token");
+	String message = request.getParameter("message");
+
+	// api키 값을 세팅한다. 서버 어플리케이션이 fcm 권한이 있는지 확인한다.
+	// FCM의 서버키를 firebase에서 가져온다.
+	String apiKey = "AAAABCMnvos:APA91bHNyr6l0i3y59d-xOAKHXqnltzJR8ePu0S2mTFDQtg8PLA5SpfPk-9RglqkuifYtoG1ia0VCnOaoLePSUOZ1Y7mewKY-UPZKOyOaO9r3aZef4UhTFGnYigCsU6QnzxXABiSnbmd";
+	// 구글 fcm api를 이용하도록 url을 지정한다.
+	URL url = new URL("https://fcm.googleapis.com/fcm/send");
+	// http url을 처리하는 개체를 만든다.
+	HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+	// url을 output으로 사용하도록 설정한다.
+	conn.setDoOutput(true);
+	// url 요청을 POST로 한다.
+	conn.setRequestMethod("POST");
+	// JSON 양식임을 알려준다.
+	conn.setRequestProperty("Content-Type", "application/json");
+	// 권한을 지정한다.
+	conn.setRequestProperty("Authorization","key="+apiKey);
+
+	// 메시지 정보를 세팅한다.
+	JSONObject msgObj = new JSONObject();
+	msgObj.put("title","FCM Title");
+	msgObj.put("body",message);
+
+	JSONObject sendObj = new JSONObject();
+	sendObj.put("notification",msgObj);
+	sendObj.put("to",token);
+
+	String data = sendObj.toJSONString();
+
+	// 서버로 데이터를 전달한다.
+	OutputStream os = conn.getOutputStream();
+	os.write(data.getBytes("UTF-8"));
+	os.flush();
+	os.close();
+
+	// firebase 서버가 전달하는 응답 결과를 받는다.
+	InputStream is = conn.getInputStream();
+	InputStreamReader isr = new InputStreamReader(is);
+	// 여러줄로 응답이 오기때문에 버퍼드 리더를 받는다.
+	BufferedReader br = new BufferedReader(isr);
+
+	String lines = null;
+	StringBuffer buf= new StringBuffer();
+
+	do{
+		lines = br.readLine();
+		if(lines!=null){
+			buf.append(lines);
+		}
+	}while(lines!=null);
+
+	br.close();
+
+	System.out.println(buf.toString());
+
+
+%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<h3>전송 완료</h3>
+
+</body>
+</html>
