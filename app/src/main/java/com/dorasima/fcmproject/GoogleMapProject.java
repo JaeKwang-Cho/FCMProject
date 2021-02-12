@@ -18,9 +18,25 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.security.KeyStore;
+import java.util.ArrayList;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class GoogleMapProject extends AppCompatActivity {
 
@@ -29,8 +45,18 @@ public class GoogleMapProject extends AppCompatActivity {
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION
     };
+
     LocationManager locationManager;
     GoogleMap map;
+
+    // JSON 데이터를 담을 리스트
+    ArrayList<Double> lat_list = new ArrayList<Double>();
+    ArrayList<Double> lng_list = new ArrayList<Double>();
+    ArrayList<String> name_list = new ArrayList<String>();
+    ArrayList<String> vicinity_list = new ArrayList<String>();
+
+    // 구글맵의 Marker 개체를 담을 리스트
+    ArrayList<Marker> marker_list = new ArrayList<Marker>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,6 +166,10 @@ public class GoogleMapProject extends AppCompatActivity {
         }
         map.setMyLocationEnabled(true);
 
+        // 주변 정보 가져오는 스레드
+        PlaceNetworkThread placeNetworkThread = new PlaceNetworkThread(location.getLatitude(),location.getLongitude());
+        placeNetworkThread.start();
+
     }
     // 현재 위치 측정이 성공하면 반응하는 리스너
     class GetMyLocationListener implements LocationListener{
@@ -156,6 +186,120 @@ public class GoogleMapProject extends AppCompatActivity {
             setMyLocation(location);
             // 위치 측정을 중단한다.
             locationManager.removeUpdates(this);
+        }
+    }
+    // 구글 서버에서 주변 정보를 받아오기 위한 스레드
+    class PlaceNetworkThread extends Thread{
+        private double lat, lng;
+        // 생성자로 위도 경도를 받는다.
+        PlaceNetworkThread(double lat, double lng){
+            this.lat = lat;
+            this.lng= lng;
+        }
+        @Override
+        public void run() {
+            super.run();
+
+            OkHttpClient client = new OkHttpClient();
+            Request.Builder builder = new Request.Builder();
+            // 사이트를 지정한다.
+            String site = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+                    +"?key=AIzaSyCcQpmHbJ3fvcvbCR-i3wlqXvg96O9jFZM"
+                    +"&location="+lat+","+lng
+                    +"&radius=1000"
+                    +"&language=ko"
+                    +"&type=restaurant";
+            Log.d("test123",site);
+
+            builder = builder.url(site);
+            Request request = builder.build();
+
+            PlaceCallback placeCallback = new PlaceCallback();
+            Call call = client.newCall(request);
+            call.enqueue(placeCallback);
+        }
+    }
+    class PlaceCallback implements Callback{
+        @Override
+        public void onFailure(@NotNull Call call, @NotNull IOException e) {
+            // 실패 했을 때 코드
+        }
+
+        @Override
+        public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+            try{
+                String result = response.body().string();
+                // JSON 양식으로 읽어온다.
+                JSONObject jsonObject = new JSONObject(result);
+                String status = jsonObject.getString("status");
+                if (status.equals("OK")) {
+                    JSONArray results = jsonObject.getJSONArray("results");
+
+                    lat_list.clear();
+                    lng_list.clear();
+                    name_list.clear();
+                    vicinity_list.clear();
+                    for(int i = 0;i<results.length();i++){
+                        JSONObject object = results.getJSONObject(i);
+
+                        // 위도 경도를 뽑는다.
+                        JSONObject geometry = object.getJSONObject("geometry");
+                        JSONObject location = geometry.getJSONObject("location");
+                        double lat = location.getDouble("lat");
+                        double lng = location.getDouble("lng");
+
+                         // 이름을 뽑는다.
+                        String name = object.getString("name");
+
+                        // 인근 정보를 뽑는다.
+                        String vicinity = object.getString("vicinity");
+
+                        lat_list.add(lat);
+                        lng_list.add(lng);
+                        name_list.add(name);
+                        vicinity_list.add(vicinity);
+                    }
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            // 지도에 표시되어 있는 마커를 제거한다.
+                            for(Marker marker:marker_list){
+                                marker.remove();
+                            }
+                            marker_list.clear();
+
+                            for(int i = 0;i<lat_list.size();i++){
+                                double lat = lat_list.get(i);
+                                double lng = lng_list.get(i);
+                                String name = name_list.get(i);
+                                String vicinity = vicinity_list.get(i);
+
+                                LatLng position = new LatLng(lat,lng);
+                                // 마커 세팅을 도와주는 MarkerOptions 개체
+                                MarkerOptions markerOptions = new MarkerOptions();
+                                markerOptions.position(position);
+
+                                // 말풍선을 세팅할 수도 있다.
+                                markerOptions.title(name);
+                                markerOptions.snippet(vicinity);
+
+                                // 마커 이미지를 설정할 수 도 있다.
+                                BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromResource(
+                                        android.R.drawable.ic_menu_mylocation);
+                                markerOptions.icon(bitmapDescriptor);
+
+                                // 마커를 맵에 세팅한다.
+                                Marker marker = map.addMarker(markerOptions);
+                                marker_list.add(marker);
+
+                            }
+                        }
+                    });
+                }
+                Log.d("test123",result);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
         }
     }
 }
