@@ -3,8 +3,10 @@ package com.dorasima.fcmproject;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -45,6 +47,10 @@ public class MainActivity extends AppCompatActivity {
                         thread.start();
                     }
                 });
+    }
+    public void nextBtn(View view){
+        Intent intent = new Intent(this, GoogleMapProject.class );
+        startActivity(intent);
     }
     // 서버로 토큰을 보내는 스레드
     public class SendTokenThread extends Thread{
